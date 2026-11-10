@@ -88,11 +88,15 @@ MainActivity ← LiveData ← MainViewModel (PlateCaptureList, metrics, detector
 
 The app bundles three models. Both OCR models contain weights trained by this project; the detection model does not.
 
-| Model | App component | Asset | Trained by this project? | License | Origin and processing |
-|-------|---------------|-------|--------------------------|---------|-----------------------|
-| Plate OCR (default) | `CpuPlateOcr` (plate text recognition, on the CPU) | `plate_ocr_cct_s_v2.tflite` | **Yes, fine-tuned** | Copyright © 2026 InnoComm, MIT for this project's fine-tuning. Derived from fast-plate-ocr `cct-s-v2-global`, whose weights license is unconfirmed | Started from the pretrained fast-plate-ocr `cct-s-v2-global` weights, then fine-tuned for 30 epochs on Taiwanese plates (about 5,400 training and 520 validation crops). In November 2026 it was fine-tuned again for 20 epochs with 8,000 synthetic plates in the official layouts and 87 real green commercial plates added, which raised accuracy on green, electric, and red plates. The region classification output was removed before conversion to TFLite. |
-| Plate OCR (APU option) | `ApuPlateOcr` (plate text recognition, on the APU) | `plate_ocr_crnn_cnn_v4_int8.tflite` | **Yes, from scratch** | Copyright © 2026 InnoComm, MIT | CRNN-style convolutional model with CTC decoding, trained for 80 epochs on the same crops as the default model, then for 40 more with 8,000 synthetic plates added, and for 30 more with 87 real green commercial plates added. In November 2026 its input was raised from 128×32 to 128×64 (v4), and it was trained for 25 more epochs with stronger tilt and perspective augmentation, then 10 more with 2,000 synthetic plates containing Q added, because Q and 0 were often confused. Converted to full INT8. |
-| Plate detection | `PlateDetector` (plate boxes, on the APU or CPU) | `plate_yolov9t_416_int8.tflite`, compiled cache in `neuron_cache/` | No | Upstream terms; see Models and Datasets below | Pretrained open-image-models YOLOv9-t 416, with weights unchanged by training. Decoding and NMS were cut from the graph, and it was converted to full INT8 using real plate images for calibration. |
+| Model | Asset | Runs on | Trained by this project? | License |
+|-------|-------|---------|--------------------------|---------|
+| Plate OCR (default) | `plate_ocr_cct_s_v2.tflite` | CPU | **Yes, fine-tuned** | © 2026 InnoComm, MIT for the fine-tuning |
+| Plate OCR (APU option) | `plate_ocr_crnn_cnn_v4_int8.tflite` | APU | **Yes, from scratch** | © 2026 InnoComm, MIT |
+| Plate detection | `plate_yolov9t_416_int8.tflite` | APU, or CPU as fallback | No | Upstream terms |
+
+- **Plate OCR (default)**, `CpuPlateOcr`: Started from the pretrained fast-plate-ocr `cct-s-v2-global` weights, then fine-tuned for 30 epochs on Taiwanese plates (about 5,400 training and 520 validation crops). In November 2026 it was fine-tuned again for 20 epochs with 8,000 synthetic plates in the official layouts and 87 real green commercial plates added, which raised accuracy on green, electric, and red plates. The region classification output was removed before conversion to TFLite. It is derived from the fast-plate-ocr weights, whose license is unconfirmed.
+- **Plate OCR (APU option)**, `ApuPlateOcr`: CRNN-style convolutional model with CTC decoding, trained for 80 epochs on the same crops as the default model, then for 40 more with 8,000 synthetic plates added, and for 30 more with 87 real green commercial plates added. In November 2026 its input was raised from 128×32 to 128×64 (v4), and it was trained for 25 more epochs with stronger tilt and perspective augmentation, then 10 more with 2,000 synthetic plates containing Q added, because Q and 0 were often confused. Converted to full INT8.
+- **Plate detection**, `PlateDetector`: Pretrained open-image-models YOLOv9-t 416, with weights unchanged by training. Decoding and NMS were cut from the graph, and it was converted to full INT8 using real plate images for calibration. Its compiled APU cache is in `neuron_cache/`. For its license, see Models and Datasets under Third-Party Libraries.
 
 Both OCR models were trained on the EZCon dataset, which declares no license, on 87 photos from Wikimedia Commons under various Creative Commons licenses, and on synthetic plates built from glyphs cut from the Highway Bureau sample chart. Whether trained weights are derivative works of their training data is legally unsettled, so InnoComm's MIT license on these models does not override the terms of the pretrained weights and training data they build on.
 
@@ -141,4 +145,41 @@ For the NeuroPilot SDK, these files, or other questions about this project, cont
 This project is licensed under the [MIT License](https://opensource.org/license/mit).
 Copyright © 2026 InnoComm Mobile Technology Corp (https://www.innocomm.com/)
 
+The MIT License covers this project's own code, and InnoComm's contribution to the two OCR models it trained (see Models). The third-party libraries, models, and datasets below, including the pretrained weights and training data those OCR models build on, are subject to their own terms.
 
+> **Licensing to be confirmed:** Items marked "unconfirmed" under Models and Datasets have no explicit license terms yet, and should be cleared before this project or its APK is distributed. The NeuroPilot SDK is supplied by MediaTek, and its redistribution terms also need to be confirmed. The MIT license on the two OCR models covers only InnoComm's contribution and does not remove the conditions of the pretrained weights and training data they derive from.
+
+## Third-Party Libraries
+
+### Shipped with the app
+
+| Library | Version | License | Notes |
+|---------|---------|---------|-------|
+| [AndroidX AppCompat](https://developer.android.com/jetpack/androidx/releases/appcompat) | 1.6.1 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [AndroidX RecyclerView](https://developer.android.com/jetpack/androidx/releases/recyclerview) | 1.3.2 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [AndroidX Lifecycle](https://developer.android.com/jetpack/androidx/releases/lifecycle) (ViewModel, LiveData) | 2.6.2 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [Kotlin Standard Library](https://kotlinlang.org/) | 1.9.22 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [TensorFlow Lite](https://www.tensorflow.org/lite) (including GPU delegate) | 2.16.1 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [UVCAndroid](https://github.com/shiyinghan/UVCAndroid) | 1.0.11 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | Bundles the native libraries below |
+| [libusb](https://libusb.info/) (bundled in UVCAndroid) | Not stated | [LGPL 2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | Dynamically linked as a separate `libusb1.0.so` |
+| [libuvc](https://github.com/libuvc/libuvc) (bundled in UVCAndroid) | Not stated | BSD-3-Clause | Copyright notice must be retained; see the upstream license file |
+| [libjpeg-turbo](https://libjpeg-turbo.org/) (bundled in UVCAndroid) | 2.1.2 (inferred from file name) | IJG, BSD-3-Clause, zlib | Copyright notices must be retained; see the upstream license file |
+| [libyuv](https://chromium.googlesource.com/libyuv/libyuv/) (bundled in UVCAndroid) | Not stated | BSD-3-Clause | Copyright notice must be retained; see the upstream license file |
+| [Hutool Core](https://github.com/dromara/hutool) (UVCAndroid dependency) | 5.8.35 | [Mulan PSL v2](http://license.coscl.org.cn/MulanPSL2) | |
+| MediaTek NeuroPilot (`app/libs/neuropilot-T-20220701-I6a8d.aar`) | T-20220701 | MediaTek proprietary; terms unconfirmed | The AAR contains no license file; confirm with MediaTek before redistributing |
+
+### Models and Datasets
+
+| Item | Use | License | Notes |
+|------|-----|---------|-------|
+| [open-image-models](https://github.com/ankandrew/open-image-models) YOLOv9-t 416 | Source of the plate detection model (shipped with the app) | Project code is MIT; **weights unconfirmed** | The project does not state a license for the weights. The original YOLOv9 implementation, [WongKinYiu/yolov9](https://github.com/WongKinYiu/yolov9), is GPL-3.0; confirm whether that affects the weights |
+| [fast-plate-ocr](https://github.com/ankandrew/fast-plate-ocr) cct-s-v2-global | Source of the OCR model (fine-tuned and shipped with the app) | Project code is MIT; **pretrained model unconfirmed** | The project does not separately state a license for pretrained models. The bundled CPU OCR model is a fine-tuned derivative of these weights |
+| [EZCon/taiwan-license-plate-recognition](https://huggingface.co/datasets/EZCon/taiwan-license-plate-recognition) | OCR training and evaluation (data not shipped with the app) | **Unconfirmed** | The dataset page declares no license |
+| [keremberke/license-plate-object-detection](https://huggingface.co/datasets/keremberke/license-plate-object-detection) | Quantization calibration and evaluation of the detection model (data not shipped with the app) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Source: Vehicle Registration Plates Dataset, Augmented Startups, [Roboflow Universe](https://universe.roboflow.com/augmented-startups/vehicle-registration-plates-trudk), 2022 |
+
+### Test only
+
+| Library | Version | License | Notes |
+|---------|---------|---------|-------|
+| [JUnit](https://junit.org/junit4/) | 4.13.2 | [EPL 1.0](https://www.eclipse.org/legal/epl-v10.html) | |
+| [AndroidX Test](https://developer.android.com/jetpack/androidx/releases/test) (runner, core, rules, ext-junit) | 1.5.2 / 1.5.0 / 1.5.0 / 1.1.5 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
