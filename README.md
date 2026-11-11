@@ -15,11 +15,17 @@ An Android app that recognizes Taiwanese license plates in real time. It reads v
 - Runs in landscape and keeps the screen on while in the foreground. The test device ignores app orientation requests, so the app locks the system rotation to landscape while it is in the foreground and restores it when you leave. This needs the "Modify system settings" permission, which the app asks for on first launch; until it is granted, the app uses its portrait layout
 
 ## Screenshots
-**Main screen (landscape).** Metrics panel and plate capture list on the left, live camera preview on the right. The buttons at the top right of the preview switch cameras and change the resolution. Taken on the MTK G360 with a USB camera.
+**Main screen (landscape).** Metrics panel and plate capture list on the left, live camera preview on the right. The buttons at the top right of the preview switch cameras and change the resolution. Both shots use a USB camera.
 
-![Main screen in landscape, with the metrics panel, plate capture list, and camera preview](images/main_screen.png)
+MTK G520 (Android 16), taken before the camera switch button was added:
 
-**Main screen with APU OCR.** The same screen with OCR on the APU: about 3 to 5 ms per read instead of about 140 ms on the CPU, but less accurate. In this shot it dropped a character from `EPS-0833` and `RAH-5509`, which the CPU model reads correctly.
+![Main screen on the MTK G520](images/main_screen_g520.png)
+
+MTK G360 (Android 15):
+
+![Main screen on the MTK G360](images/main_screen_g360.png)
+
+**Main screen with APU OCR.** The G360 screen with OCR on the APU: about 3 to 5 ms per read instead of about 140 ms on the CPU, but less accurate. In this shot it dropped a character from `EPS-0833` and `RAH-5509`, which the CPU model reads correctly.
 
 ![Main screen with OCR set to APU](images/main_screen_apu.png)
 
