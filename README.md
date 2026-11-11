@@ -171,3 +171,42 @@ For the NeuroPilot SDK, these files, or other questions about this project, cont
 ## License
 This project is licensed under the [MIT License](https://opensource.org/license/mit).
 Copyright © 2026 InnoComm Mobile Technology Corp (https://www.innocomm.com/)
+
+The MIT License covers this project's own code, and InnoComm's contribution to the two OCR models it trained (see Models). The third-party libraries, models, and datasets below, including the pretrained weights and training data those OCR models build on, are subject to their own terms.
+
+> **Licensing to be confirmed:** Items marked "unconfirmed" under Models and Datasets have no explicit license terms yet, and should be cleared before this project or its APK is distributed. The NeuroPilot SDK is supplied by MediaTek, and its redistribution terms also need to be confirmed. The MIT license on the two OCR models covers only InnoComm's contribution and does not remove the conditions of the pretrained weights and training data they derive from.
+
+## Third-Party Libraries
+
+### Shipped with the app
+
+| Library | Version | License | Notes |
+|---------|---------|---------|-------|
+| [AndroidX AppCompat](https://developer.android.com/jetpack/androidx/releases/appcompat) | 1.6.1 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [AndroidX RecyclerView](https://developer.android.com/jetpack/androidx/releases/recyclerview) | 1.3.2 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [AndroidX Lifecycle](https://developer.android.com/jetpack/androidx/releases/lifecycle) (ViewModel, LiveData) | 2.6.2 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [Kotlin Standard Library](https://kotlinlang.org/) | 1.9.22 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [TensorFlow Lite](https://www.tensorflow.org/lite) (including GPU delegate) | 2.16.1 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
+| [UVCAndroid](https://github.com/shiyinghan/UVCAndroid) | 1.0.11 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | Bundles the native libraries below |
+| [libusb](https://libusb.info/) (bundled in UVCAndroid) | Not stated | [LGPL 2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html) | Dynamically linked as a separate `libusb1.0.so` |
+| [libuvc](https://github.com/libuvc/libuvc) (bundled in UVCAndroid) | Not stated | BSD-3-Clause | Copyright notice must be retained; see the upstream license file |
+| [libjpeg-turbo](https://libjpeg-turbo.org/) (bundled in UVCAndroid) | 2.1.2 (inferred from file name) | IJG, BSD-3-Clause, zlib | Copyright notices must be retained; see the upstream license file |
+| [libyuv](https://chromium.googlesource.com/libyuv/libyuv/) (bundled in UVCAndroid) | Not stated | BSD-3-Clause | Copyright notice must be retained; see the upstream license file |
+| [Hutool Core](https://github.com/dromara/hutool) (UVCAndroid dependency) | 5.8.35 | [Mulan PSL v2](http://license.coscl.org.cn/MulanPSL2) | |
+| MediaTek NeuroPilot (`app/libs/neuropilot-T-20220701-I6a8d.aar`) | T-20220701 | MediaTek proprietary; terms unconfirmed | The AAR contains no license file; confirm with MediaTek before redistributing |
+
+### Models and Datasets
+
+| Item | Use | License | Notes |
+|------|-----|---------|-------|
+| [open-image-models](https://github.com/ankandrew/open-image-models) YOLOv9-t 416 | Source of the plate detection model (shipped with the app) | Project code is MIT; **weights unconfirmed** | The project does not state a license for the weights. The original YOLOv9 implementation, [WongKinYiu/yolov9](https://github.com/WongKinYiu/yolov9), is GPL-3.0; confirm whether that affects the weights |
+| [fast-plate-ocr](https://github.com/ankandrew/fast-plate-ocr) cct-s-v2-global | Source of the OCR model (fine-tuned and shipped with the app) | Project code is MIT; **pretrained model unconfirmed** | The project does not separately state a license for pretrained models. The bundled CPU OCR model is a fine-tuned derivative of these weights |
+| [EZCon/taiwan-license-plate-recognition](https://huggingface.co/datasets/EZCon/taiwan-license-plate-recognition) | OCR training and evaluation (data not shipped with the app) | **Unconfirmed** | The dataset page declares no license |
+| [keremberke/license-plate-object-detection](https://huggingface.co/datasets/keremberke/license-plate-object-detection) | Quantization calibration and evaluation of the detection model (data not shipped with the app) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Source: Vehicle Registration Plates Dataset, Augmented Startups, [Roboflow Universe](https://universe.roboflow.com/augmented-startups/vehicle-registration-plates-trudk), 2022 |
+
+### Test only
+
+| Library | Version | License | Notes |
+|---------|---------|---------|-------|
+| [JUnit](https://junit.org/junit4/) | 4.13.2 | [EPL 1.0](https://www.eclipse.org/legal/epl-v10.html) | |
+| [AndroidX Test](https://developer.android.com/jetpack/androidx/releases/test) (runner, core, rules, ext-junit) | 1.5.2 / 1.5.0 / 1.5.0 / 1.1.5 | [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) | |
