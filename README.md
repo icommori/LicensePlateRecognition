@@ -1,9 +1,10 @@
-# LicensePlateRecognition (MTK G520, Android 16)
+# LicensePlateRecognition (MTK G520 and G360)
 
-An Android app that recognizes Taiwanese license plates in real time. It reads video from a USB UVC camera, runs plate detection and text recognition on the device with no network connection, and lists the plates it reads. On MediaTek devices the detection model can use the APU; otherwise it falls back to the CPU.
+An Android app that recognizes Taiwanese license plates in real time. It reads video from a USB UVC camera or the device's built-in back camera, runs plate detection and text recognition on the device with no network connection, and lists the plates it reads. On MediaTek devices the detection model can use the APU; otherwise it falls back to the CPU.
 
 ## Features
 - USB UVC camera support: opens automatically when only one camera is attached, offers a picker when there are several, and updates the picker on hot-plug
+- Built-in back camera support through Camera2: listed in the same picker as USB cameras and opened automatically when no USB camera is attached. Frames are rotated upright to match the screen. A button on the preview switches cameras at any time
 - Defaults to the highest resolution up to 1080p, with a manual resolution switch on screen
 - Plate detection (YOLOv9-t, full INT8): starts on the CPU and switches seamlessly to the APU once it is ready in the background
 - Plate text recognition (fast-plate-ocr cct-s-v2, fine-tuned on Taiwanese plates), with an on-screen selector for CPU, APU (a faster, less accurate model), or None (detection only)
@@ -14,9 +15,13 @@ An Android app that recognizes Taiwanese license plates in real time. It reads v
 - Runs in landscape and keeps the screen on while in the foreground. The test device ignores app orientation requests, so the app locks the system rotation to landscape while it is in the foreground and restores it when you leave. This needs the "Modify system settings" permission, which the app asks for on first launch; until it is granted, the app uses its portrait layout
 
 ## Screenshots
-**Main screen (landscape).** Metrics panel and plate capture list on the left, live camera preview on the right.
+**Main screen (landscape).** Metrics panel and plate capture list on the left, live camera preview on the right. The buttons at the top right of the preview switch cameras and change the resolution. Taken on the MTK G360 with a USB camera.
 
 ![Main screen in landscape, with the metrics panel, plate capture list, and camera preview](images/main_screen.png)
+
+**Main screen with APU OCR.** The same screen with OCR on the APU: about 3 to 5 ms per read instead of about 140 ms on the CPU, but less accurate. In this shot it dropped a character from `EPS-0833` and `RAH-5509`, which the CPU model reads correctly.
+
+![Main screen with OCR set to APU](images/main_screen_apu.png)
 
 **OCR modes.** The same plate in each mode, from top to bottom: CPU, APU, and None. None draws the box but reads no number and adds nothing to the capture list.
 
@@ -24,8 +29,8 @@ An Android app that recognizes Taiwanese license plates in real time. It reads v
 
 | Mode | OCR time in this shot | Reading |
 |------|-----------------------|---------|
-| CPU | 123 ms | `FAE-061`, 100% |
-| APU | 3 ms | `FAE-061`, 99% |
+| CPU | 142 ms | `RBD-7923`, 100% |
+| APU | 3 ms | `RBD-7923`, 100% |
 | None | None | No number |
 
 The displayed time is the last read before the plate locks, so it varies: APU reads in the app were seen from 3 to 10 ms, and the first reads after loading can reach about 14 ms. Both models read this plate correctly. One plate does not show the accuracy difference; see [Why OCR Runs on the CPU](#why-ocr-runs-on-the-cpu).
@@ -40,7 +45,7 @@ The displayed time is the last read before the plate locks, so it varies: APU re
 
 ## Requirements
 - Android 9 (API 28) or later, arm64-v8a
-- A device with USB Host support and a UVC camera
+- A UVC camera on a device with USB Host support, or a built-in back camera
 - APU acceleration needs a MediaTek device that provides the Neuron libraries; otherwise the app uses the CPU
 
 For development:
@@ -48,12 +53,28 @@ For development:
 - Android SDK 35
 - `signing.storePassword`, `signing.keyAlias`, and `signing.keyPassword` set in `local.properties`, and the keystore `innocomm.jks` in the project root
 
-Measured at 1280×720: about 4–8 ms for APU detection, about 123 ms for CPU OCR, and about 30 fps for both preview and detection.
+## Benchmarks
+
+Measured on two MediaTek devices with the same APK.
+
+| Measurement | MTK G520 (Android 16) | MTK G360, MT8367 (Android 15) |
+|-------------|-----------------------|-------------------------------|
+| Plate detection on the APU, median | 4.7 ms | 5.0 ms |
+| Plate detection on the GPU, median | 47.5 ms | 105.4 ms |
+| Plate detection on the CPU, median | 61.4 ms | 72.3 ms |
+| Detection per frame on the APU, including frame conversion and decoding | 21.8 ms | 27.7 ms |
+| OCR on the CPU, average over 108 photos | 109 ms | 126 ms |
+| OCR on the APU, average over 108 photos | 4.7 ms | 4.8 ms |
+| Vehicle photos read correctly, CPU / APU OCR | 102 / 99 of 108 | 102 / 99 of 108 |
+| Live preview and detection | 30 fps (USB, 1280×720) | 30 fps (USB, 1280×720; built-in camera, 1920×1080) |
+
+Detection times come from `BackendBenchmarkTest` on three test photos, and OCR times and accuracy from `OcrAccuracyTest` on the 108 vehicle photos, both in a debug build. Accuracy is the same on both devices because the models give the same results; only speed differs. The G360's CPU and GPU are slower, but its APU detection is nearly as fast as the G520's.
 
 ## Architecture
 
 ```
-UVC camera → UvcCameraController → MainViewModel → DetectionPipeline
+UVC camera → UvcCameraController ─┐
+Built-in camera → BuiltInCameraController ─┴→ MainViewModel → DetectionPipeline
                                                       ├─ PlateDetector (detection) → PlateTracker (tracking, voting)
                                                       └─ PlateCropper → PlateOcr (text recognition)
                                                                               ↓
@@ -62,7 +83,7 @@ MainActivity ← LiveData ← MainViewModel (PlateCaptureList, metrics, detector
 
 | Stage | Model | Runs on | What it does |
 |-------|-------|---------|--------------|
-| Camera input | None | CPU | Receives NV21 frames from the UVC camera |
+| Camera input | None | CPU | Receives NV21 frames from the UVC camera, or YUV frames from the built-in camera, converted to NV21 and rotated upright |
 | Plate detection | YOLOv9-t 416 (INT8) | APU, or CPU as fallback | Finds plate boxes in each frame |
 | Tracking | None | CPU | Matches boxes across frames by overlap and assigns IDs |
 | Cropping | None | CPU | Cuts each plate from the full-resolution frame and scales it to 128×64 |
@@ -72,14 +93,14 @@ MainActivity ← LiveData ← MainViewModel (PlateCaptureList, metrics, detector
 
 | Location | Contents |
 |----------|----------|
-| `camera/` | Wrapper around the UVCAndroid camera flow, and resolution selection |
+| `camera/` | Wrappers around the UVCAndroid camera flow and Camera2 for the built-in camera, YUV conversion, and resolution selection |
 | `detection/` | Inference backends, detection and OCR, tracking, plate formats, capture list |
 | `ui/` | Activity, ViewModel, layouts, and custom views |
 | `datasets/` | Training, evaluation, and on-device screen test data, grouped by purpose (see `datasets/README.md`); not shipped with the app |
 | `tools/` | Python scripts for model conversion, OCR training data preparation, accuracy evaluation, and APU model training (`ocr_ctc/`) |
 
 - **State:** Display data and the detection pipeline live in `MainViewModel`, so they survive Activity recreation and the models do not need reloading. The camera is tied to the `TextureView` and foreground state, so `MainActivity` manages it. Data is kept in memory only and is cleared when the app process ends.
-- **OCR mode from adb:** For tests and screenshots, switch modes with `adb shell am start -n com.innocomm.lpr/.ui.MainActivity --es ocr_mode APU` (or `CPU`, `NONE`). Injected taps from `adb shell input` crashed `system_server` on the test device twice, so prefer this command.
+- **OCR mode from adb:** For tests and screenshots, switch modes with `adb shell am start -n com.innocomm.lpr/.ui.MainActivity --es ocr_mode APU` (or `CPU`, `NONE`). Injected taps from `adb shell input` crashed `system_server` on the test device twice, so prefer this command. To pick a camera the same way, add `--es camera builtin` (or `usb`, or `builtin:<id>` for a specific built-in camera).
 - **Threading:** Detection and OCR each have their own thread. New frames are dropped while the previous one is still processing, so latency does not build up.
 - **Box smoothing:** The drawn box goes through `BoxSmoother` (an alpha-beta filter) so it does not jitter. It is display only: tracking and OCR cropping use the raw detection box.
 - **APU cache:** The first APU model compilation on a device takes more than ten minutes, so the APK bundles a precompiled cache (`assets/neuron_cache`). Each model gets its own directory, `noBackupFilesDir/neuron_cache/<SHA-256 of the model file>`, because the Neuron cache does not separate models by token, so a model with new weights could otherwise keep running the old compilation. The bundled cache holds only the detection model, was built on the same device model, and is copied to that model's directory on first use. It is installed only when the model's hash matches `BUNDLED_CACHE_MODEL_SHA256` in `InferenceEngine.kt`. When replacing the detection model, regenerate the cache and update that value; otherwise the new model simply compiles on the device. If it is missing or unusable, the app is expected to recompile on the device and detect on the CPU until that finishes. The APU OCR model compiles in about 3 seconds, so it is not bundled.
