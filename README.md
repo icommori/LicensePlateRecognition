@@ -31,15 +31,21 @@ MTK G360 (Android 15):
 
 **OCR modes.** The same plate in each mode, from top to bottom: CPU, APU, and None. None draws the box but reads no number and adds nothing to the capture list.
 
-![The same plate with OCR set to CPU, APU, and None](images/ocr_modes.png)
+MTK G520, taken with the previous APU model (v3, 128×32 input):
 
-| Mode | OCR time in this shot | Reading |
-|------|-----------------------|---------|
-| CPU | 142 ms | `RBD-7923`, 100% |
-| APU | 3 ms | `RBD-7923`, 100% |
-| None | None | No number |
+![The same plate on the MTK G520 with OCR set to CPU, APU, and None](images/ocr_modes_g520.png)
 
-The displayed time is the last read before the plate locks, so it varies: APU reads in the app were seen from 3 to 10 ms, and the first reads after loading can reach about 14 ms. Both models read this plate correctly. One plate does not show the accuracy difference; see [Why OCR Runs on the CPU](#why-ocr-runs-on-the-cpu).
+MTK G360, with the current APU model (v4, 128×64 input):
+
+![The same plate on the MTK G360 with OCR set to CPU, APU, and None](images/ocr_modes_g360.png)
+
+| Mode | G520: OCR time, reading | G360: OCR time, reading |
+|------|-------------------------|-------------------------|
+| CPU | 123 ms, `FAE-061` 100% | 142 ms, `RBD-7923` 100% |
+| APU | 3 ms, `FAE-061` 99% | 3 ms, `RBD-7923` 100% |
+| None | No number | No number |
+
+The displayed time is the last read before the plate locks, so it varies: APU reads in the app were seen from 3 to 10 ms, and the first reads after loading can reach about 14 ms. Both models read these plates correctly. One plate does not show the accuracy difference; see [Why OCR Runs on the CPU](#why-ocr-runs-on-the-cpu).
 
 **Live overlay.** Each detected plate shows its tracking ID and detection score above the box, and the recognized number and reading confidence below it. Tap a box to recognize that plate again.
 
